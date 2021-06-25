@@ -22,6 +22,10 @@ public class A {
 	public A() {
 	}
 
+	public void setB(B b) {
+		this.b = b;
+	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
