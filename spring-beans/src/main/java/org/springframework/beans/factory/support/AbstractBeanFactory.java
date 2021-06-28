@@ -261,7 +261,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		} else {
 			// Fail if we're already creating this bean instance:
-			// We're assumably within a circular reference.
+			// We're assumably within a circular reference. 这里当前如果正在创建该bean，且从getSingleton中没有拿到对象时，抛异常
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
@@ -284,7 +284,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					return (T) parentBeanFactory.getBean(nameToLookup);
 				}
 			}
-			//这里标记当前正在创建bean对象
+			//这里标记当前正在bean已创建
 			if (!typeCheckOnly) {
 				markBeanAsCreated(beanName);
 			}
@@ -316,8 +316,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 				}
 
-				// Create bean instance.
+				// 创建 bean 实例。
 				if (mbd.isSingleton()) {
+					//这里使用lambda匿名函数，通过createBean获取单例实例
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							//这里创建bean实例
@@ -332,6 +333,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					});
 					beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				} else if (mbd.isPrototype()) {
+					//原型模式创建实例
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {

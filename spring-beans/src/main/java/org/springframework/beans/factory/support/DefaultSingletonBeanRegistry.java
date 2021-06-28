@@ -134,9 +134,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingleton(String beanName, Object singletonObject) {
 		synchronized (this.singletonObjects) {
+			//一级缓存添加
 			this.singletonObjects.put(beanName, singletonObject);
+			//三级缓存删除
 			this.singletonFactories.remove(beanName);
+			//二级缓存删除
 			this.earlySingletonObjects.remove(beanName);
+			//添加到已注册单例集合中
 			this.registeredSingletons.add(beanName);
 		}
 	}
@@ -218,6 +222,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
+			//先从一级缓存中拿
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
@@ -236,12 +241,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//这里通过传递进来的lambda进行单例对象的创建
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
 				catch (IllegalStateException ex) {
-					// Has the singleton object implicitly appeared in the meantime ->
-					// if yes, proceed with it since the exception indicates that state.
+					// 在此期间是否隐式出现了单例对象 -> 如果是，则继续处理它，因为这里抛出的是状态异常。
 					singletonObject = this.singletonObjects.get(beanName);
 					if (singletonObject == null) {
 						throw ex;
@@ -259,9 +264,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					//在创建完成后，将bean从正在创建的状态集合中移除
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					//添加单例实例到缓存中
 					addSingleton(beanName, singletonObject);
 				}
 			}
